@@ -1,52 +1,56 @@
 # 🛡️ Aegis-V: FPGA-Based Hardware Security Module (HSM)
 ### *NIST FIPS-197 AES-128 Cryptographic Co-Processor & Scientific Host Suite*
 
-[![Platform](https://img.shields.io/badge/FPGA-AMD%20Xilinx%20Artix--7%20(XC7A35T)-0052CC?style=for-the-badge&logo=xilinx&logoColor=white)]()
-[![HDL](https://img.shields.io/badge/HDL-Verilog%202001-blue?style=for-the-badge&logo=verilog)]()
-[![Standard](https://img.shields.io/badge/Security-NIST%20FIPS--197%20Compliant-success?style=for-the-badge)]()
-[![Timing](https://img.shields.io/badge/Timing-50.00%20MHz%20(WNS%20%2B3.496ns)-brightgreen?style=for-the-badge)]()
-[![Power](https://img.shields.io/badge/Power-125%20mW%20Total-orange?style=for-the-badge)]()
-[![Software](https://img.shields.io/badge/Host-Python%203%20Scientific%20GUI-yellow?style=for-the-badge&logo=python)]()
+[![Platform](https://img.shields.io/badge/Platform-Xilinx%20Artix--7%20(XC7A35T)-blue.svg)]()
+[![HDL](https://img.shields.io/badge/HDL-Verilog%202001-brightgreen.svg)]()
+[![Standard](https://img.shields.io/badge/Security-NIST%20FIPS--197%20Compliant-orange.svg)]()
+[![Timing](https://img.shields.io/badge/Timing-50.00%20MHz%20(WNS%20%2B3.496ns)-success.svg)]()
+[![Power](https://img.shields.io/badge/Power-125%20mW%20Total-orange.svg)]()
+[![Host](https://img.shields.io/badge/Host-Python%203%20Scientific%20Suite-blueviolet.svg)]()
 
-An end-to-end, high-performance **Hardware Security Module (HSM)** and cryptographic co-processor synthesized and routed on an **AMD-Xilinx Artix-7 FPGA (`XC7A35T-1FTG256C`)**. 
+An end-to-end, high-performance **Hardware Security Module (HSM)** and cryptographic co-processor synthesized and routed on an **AMD-Xilinx Artix-7 FPGA (`XC7A35T-1FTG256C`)**.
 
 The system implements a full 10-round iterative **AES-128 cryptographic engine**, a pipelined 1-key/cycle on-the-fly **Key Expander**, a full-duplex **UART bridge (115,200 baud)** with a robust 3-step physical handshake, and an interactive **Python scientific desktop application** for real-time payload streaming, file vault encryption, and NIST golden vector verification.
 
 ---
 
 ## 🏛️ System Architecture
-┌────────────────────────────────────────────────────────┐
-│ HOST SYSTEM (PC / LAPTOP) │
-│ │
-│ [ Python Scientific Suite (hsm_host_app.py) ] │
-│ • Live Vector Cryptography Pane │
-│ • Binary Payload File Vault (.enc) │
-│ • NIST SP 800-38A Mathematical Golden Verifier │
-│ • Real-Time Bus & Throughput Telemetry Monitor │
-└───────────────────────────┬────────────────────────────┘
-│ Full-Duplex USB-UART Link
-│ (115200 Baud · Pins C4 / D4)
-▼
-┌────────────────────────────────────────────────────────┐
-│ EDGE ARTIX-7 FPGA TOP LEVEL (XC7A35T) │
-│ │
-│ 1. [ UART RX/TX Subsystem ] │
-│ • 434 Clocks/Bit @ 50 MHz · 3-Step Handshake │
-│ │
-│ 2. [ Protocol & Dispatcher FSM + Watchdog ] │
-│ • Multi-Cycle Packet Reassembly & Command Router │
-│ • 100 ms Hardware Auto-Timeout Recovery │
-│ │
-│ 3. [ NIST FIPS-197 AES-128 Co-Processor ] │
-│ • Pipelined 1-Key/Cycle Key Expander & Key Cache │
-│ • 10-Round Forward Encryption Pipeline │
-│ • 10-Round Inverse Decryption Pipeline │
-│ │
-│ 4. [ On-Board Diagnostic Subsystem ] │
-│ • 16x2 HD44780 LCD Display (Status + Spinner) │
-│ • 4-Digit 7-Segment Payload Counter │
-│ • 16 Diagnostic State & Activity LEDs │
-└────────────────────────────────────────────────────────┘
+
+```text
++-----------------------------------------------------------------------------------------+
+|                                HOST SYSTEM (PC / LAPTOP)                                |
+|                                                                                         |
+|   [ Python Scientific Suite (hsm_host_app.py) ]                                         |
+|   • Live Vector Cryptography Pane                                                       |
+|   • Binary Payload File Vault (.enc)                                                    |
+|   • NIST SP 800-38A Mathematical Golden Verifier                                        |
+|   • Real-Time Bus & Throughput Telemetry Monitor                                        |
++--------------------------------------------+--------------------------------------------+
+                                             | Full-Duplex USB-UART Link
+                                             | (115200 Baud · Pins C4 / D4)
+                                             v
++-----------------------------------------------------------------------------------------+
+|                          EDGE ARTIX-7 FPGA TOP LEVEL (XC7A35T)                          |
+|                                                                                         |
+|   1. [ UART RX/TX Subsystem ]                                                           |
+|      • 434 Clocks/Bit @ 50 MHz · 3-Step Handshake                                       |
+|                                                                                         |
+|   2. [ Protocol & Dispatcher FSM + Watchdog ]                                           |
+|      • Multi-Cycle Packet Reassembly & Command Router                                   |
+|      • 100 ms Hardware Auto-Timeout Recovery                                            |
+|                                                                                         |
+|   3. [ NIST FIPS-197 AES-128 Co-Processor ]                                            |
+|      • Pipelined 1-Key/Cycle Key Expander & Key Cache                                   |
+|      • 10-Round Forward Encryption Pipeline                                             |
+|      • 10-Round Inverse Decryption Pipeline                                             |
+|                                                                                         |
+|   4. [ On-Board Diagnostic Subsystem ]                                                  |
+|      • 16x2 HD44780 LCD Display (Status + Spinner)                                      |
+|      • 4-Digit 7-Segment Payload Counter                                                |
+|      • 16 Diagnostic State & Activity LEDs                                              |
++-----------------------------------------------------------------------------------------+
+```
+
 ---
 
 ## 📊 Hardware Synthesis & Performance Benchmarks
@@ -97,7 +101,7 @@ The FPGA communicates with the host suite over a full-duplex binary frame protoc
 | **SET_KEY** | `0x01` | `0x10` | 128-Bit Master Key | `0xAA` (ACK) | Burns key into hardware registers and expands schedule |
 | **ENCRYPT** | `0x02` | `0x10` | 128-Bit Plaintext Block | `0xAA` + 16B Ciphertext | Executes 10-round AES encryption |
 | **DECRYPT** | `0x03` | `0x10` | 128-Bit Ciphertext Block | `0xAA` + 16B Plaintext | Executes 10-round inverse AES decryption |
-| **PING**    | `0x04` | `0x00` | *None* | `0x55` (ACK) | Hardware presence and handshake verification |
+| **PING** | `0x04` | `0x00` | *None* | `0x55` (ACK) | Hardware presence and handshake verification |
 
 ---
 
@@ -130,45 +134,36 @@ The hardware engine has been verified bit-for-bit against official NIST golden t
 │   └── aegis_v_architecture.tex # LaTeX/TikZ source code for vector system block diagram
 ├── .gitignore
 └── README.md
+```
 
-🚀 Quickstart & Replication
-1. Flash the FPGA Hardware
+---
 
-    Connect your EDGE Artix-7 Development Board to your PC via USB.
+## 🚀 Quickstart & Replication
 
-    Open Vivado Hardware Manager
+### 1. Flash the FPGA Hardware
+1. Connect your **EDGE Artix-7 Development Board** to your PC via USB.
+2. Open **Vivado Hardware Manager** $\rightarrow$ **Auto Connect**.
+3. Program device `xc7a35t_0` with `bitstream/hsm_top_artix7.bit`.
+4. The onboard **16x2 LCD** will immediately initialize with:
+   ```text
+   HSM: AES-128 *
+   BLK:0000 [OK]
+   ```
 
-            
-    →
-    →
+### 2. Launch the Scientific Host Suite
+1. Install Python serial dependencies:
+   ```bash
+   pip install pyserial
+   ```
+2. Run the application:
+   ```bash
+   python host_app/hsm_host_app.py
+   ```
+3. Select your serial COM port and click **Connect Device**.
+4. Click **"Run NIST Golden Test Vector"** to mathematically verify the silicon engine in real-time.
+5. Use the **Binary Payload & File Vault** tab to encrypt and decrypt arbitrary files (.pdf, images, binary datasets).
 
-          
+---
 
-    Auto Connect.
-
-    Program device xc7a35t_0 with bitstream/hsm_top_artix7.bit.
-
-    The onboard 16x2 LCD will immediately initialize with:
-    code Text
-
-    HSM: AES-128 *
-    BLK:0000 [OK]
-
-2. Launch the Scientific Host Suite
-
-    Install Python serial dependencies:
-    code Bash
-
-    pip install pyserial
-
-    Run the application:
-    code Bash
-
-    python host_app/hsm_host_app.py
-
-    Select your serial COM port and click Connect Device.
-
-    Click "Run NIST Golden Test Vector" to mathematically verify the silicon engine in real-time.
-
-    Use the Binary Payload & File Vault tab to encrypt and decrypt arbitrary files (.pdf, images, binary datasets).
-
+## 📄 License
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
