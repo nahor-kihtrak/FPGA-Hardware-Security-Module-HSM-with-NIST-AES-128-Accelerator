@@ -1,56 +1,51 @@
-# 🛡️ Aegis-V: FPGA-Based Hardware Security Module (HSM)
-### *NIST FIPS-197 AES-128 Cryptographic Co-Processor & Host Evaluation Suite*
+# Aegis-V: FPGA-Based Hardware Security Module
 
-[![Platform](https://img.shields.io/badge/Platform-Xilinx%20Artix--7%20(XC7A35T)-blue.svg)]()
-[![HDL](https://img.shields.io/badge/HDL-Verilog%202001-brightgreen.svg)]()
-[![Standard](https://img.shields.io/badge/Security-NIST%20FIPS--197%20Compliant-orange.svg)]()
-[![Timing](https://img.shields.io/badge/Timing-50.00%20MHz%20(WNS%20%2B3.496ns)-success.svg)]()
-[![Power](https://img.shields.io/badge/Power-125%20mW%20Total-orange.svg)]()
-[![Host](https://img.shields.io/badge/Host-Python%203%20Scientific%20Suite-blueviolet.svg)]()
+### NIST FIPS-197 AES-128 Cryptographic Co-Processor and Host Evaluation Suite
 
-An end-to-end, high-performance **Hardware Security Module (HSM)** and cryptographic co-processor synthesized and routed on an **AMD-Xilinx Artix-7 FPGA (`XC7A35T-1FTG256C`)**.
+Aegis-V is an FPGA-based Hardware Security Module (HSM) and cryptographic co-processor implemented on an AMD-Xilinx Artix-7 FPGA (`XC7A35T-1FTG256C`).
 
-The system implements a full 10-round iterative **AES-128 cryptographic engine**, a pipelined 1-key/cycle on-the-fly **Key Expander**, a full-duplex **UART bridge (115,200 baud)** with a robust 3-step physical handshake, and an interactive **Python scientific desktop application** for real-time payload streaming, file vault encryption, and NIST golden vector verification.
+The system implements an iterative 10-round AES-128 encryption and decryption engine, a pipelined on-the-fly AES key expansion module, a full-duplex UART communication interface, command processing logic, hardware watchdog protection, and a Python-based host application for cryptographic validation and file encryption.
 
 ---
 
-## 🏛️ System Architecture
+## System Architecture
 
 ```mermaid
 flowchart TD
-    subgraph Host["Host System (PC / Workstation)"]
-        GUI["Python Scientific Suite (hsm_host_app.py)"]
-        NIST_VEC["NIST SP 800-38A Verifier"]
-        VAULT["Payload Streamer & File Vault (.enc)"]
-        SER["PySerial Bus Driver"]
+    subgraph Host["Host System"]
+        GUI["Python Host Application"]
+        NIST_VEC["NIST Test Vector Verification"]
+        VAULT["Payload Streamer & File Vault"]
+        SER["PySerial Driver"]
+
         GUI --> NIST_VEC
         GUI --> VAULT
         NIST_VEC --> SER
         VAULT --> SER
     end
 
-    subgraph Bus["Physical Communications Link"]
-        UART_BUS["USB-UART Full-Duplex Link (115200 Baud · Pins C4 / D4)"]
+    subgraph Bus["Communication Interface"]
+        UART_BUS["USB-UART Full-Duplex Link<br/>115200 Baud"]
     end
 
-    subgraph FPGA["EDGE Artix-7 FPGA Top Level (XC7A35T)"]
-        subgraph COMMS["UART & Protocol Layer"]
-            RX["UART RX Engine (50 MHz)"]
-            TX["UART TX Engine (3-Step Handshake)"]
+    subgraph FPGA["Artix-7 FPGA"]
+        subgraph COMMS["UART and Protocol Layer"]
+            RX["UART RX"]
+            TX["UART TX"]
             FSM["Command Dispatcher FSM"]
-            WD["Watchdog Timer (100ms)"]
+            WD["100 ms Watchdog"]
         end
 
-        subgraph CRYPTO["NIST FIPS-197 AES-128 Co-Processor"]
-            KEY_EXP["Pipelined Key Expander (1-Key/Cycle)"]
-            KEY_CACHE["Round-Key Cache (K0-K10)"]
-            ENC_PIPE["10-Round Encryption Pipeline"]
-            DEC_PIPE["10-Round Decryption Pipeline"]
+        subgraph CRYPTO["AES-128 Cryptographic Core"]
+            KEY_EXP["Pipelined Key Expander"]
+            KEY_CACHE["Round-Key Cache K0-K10"]
+            ENC_PIPE["AES Encryption Engine"]
+            DEC_PIPE["AES Decryption Engine"]
         end
 
-        subgraph UI["Onboard Peripheral Telemetry"]
-            LCD_CTRL["16x2 HD44780 LCD Display"]
-            SEG_CTRL["4-Digit 7-Segment Multiplexer"]
+        subgraph UI["Hardware Interface"]
+            LCD_CTRL["16x2 HD44780 LCD"]
+            SEG_CTRL["4-Digit 7-Segment Display"]
             LEDS["16 Diagnostic LEDs"]
         end
     end
@@ -59,124 +54,256 @@ flowchart TD
     UART_BUS --- RX
     UART_BUS --- TX
     RX --> FSM
-    TX <-- FSM
+    FSM --> TX
     FSM --> CRYPTO
     FSM --> UI
 ```
 
 ---
 
-## 📊 Hardware Synthesis & Performance Benchmarks
+## Hardware Synthesis and Performance
 
-*All metrics are verified from post-route timing, power, and utilization reports in **Xilinx Vivado v2025.2** targeting part `xc7a35tftg256-1`.*
+All reported hardware metrics are based on post-route Vivado reports for AMD-Xilinx Artix-7 device `xc7a35tftg256-1`.
 
-| Metric | Measured Silicon Result | Device Available | Utilization / Margin |
-| :--- | :---: | :---: | :---: |
-| **Logic LUTs (Slice LUTs)** | **4,327** | 20,800 | **20.80%** |
-| **Registers (Flip-Flops)** | **2,556** | 41,600 | **6.14%** |
-| **Multiplexers (F7 / F8)** | **1,057** | 24,450 | **4.32%** |
-| **User I/O Pins** | **42** | 170 | **24.71%** |
-| **Global Clock Buffers (BUFG)** | **1** | 32 | **3.13%** |
-| **Block RAM / DSP** | **0** | 50 / 90 | **0.00% (Pure Distributed Logic)** |
-| **System Clock Frequency** | **50.00 MHz** (20.00 ns) | — | **Timing Met (0 Violations)** |
-| **Worst Negative Slack (WNS)** | **+3.496 ns** | — | **Positive Setup Margin** |
-| **Worst Hold Slack (WHS)** | **+0.051 ns** | — | **Positive Hold Margin** |
-| **Failing Timing Endpoints** | **0 / 6,082** | — | **0.00% Failure Rate** |
-| **Max Operating Frequency** | **60.59 MHz** | — | 1 / (20.000 - 3.496) ns |
-| **Total On-Chip Power** | **125 mW (0.125 W)** | — | 53 mW Dynamic / 72 mW Static |
-| **Junction Temperature** | **25.6 °C** | 85.0 °C Max | Thermal Margin: 59.4 °C |
-
----
-
-## ⚡ Microarchitectural Highlights
-
-### 1. Timing-Closed Pipelined Key Expansion
-* **The Problem**: An unrolled 10-round combinational key expansion cascade chains 10 S-Boxes and 40 XORs sequentially, creating an unroutable **29.16 ns critical path delay** (causing severe $-9.160\text{ ns}$ timing violations at 50 MHz).
-* **The Solution**: Pipelined the Key Expander into an iterative **1-key/cycle registered schedule** (`ST_EXP_KEY`), reducing the path delay to **8.40 ns**.
-* **Zero-Overhead Key Caching**: All 11 round keys ($K_0 \dots K_{10}$) are cached in hardware registers upon programming. When streaming multi-block files, subsequent blocks bypass expansion entirely and process in **10 clock cycles (200 ns) per block**.
-
-### 2. Dual-Path FIPS-197 AES Transformation
-* **Forward Cipher (Encryption)**: Iterative pipeline executing `SubBytes (16x S-Box LUTs)` $\rightarrow$ `ShiftRows` $\rightarrow$ `MixColumns (GF(2^8) Matrix)` $\rightarrow$ `AddRoundKey` ($K_1 \dots K_9$), with `MixColumns` bypassed in Round 10.
-* **Inverse Cipher (Decryption)**: Standard inverse datapath executing `InvShiftRows` $\rightarrow$ `InvSubBytes (16x Inv S-Box LUTs)` $\rightarrow$ `AddRoundKey` ($K_{10-r}$) $\rightarrow$ `InvMixColumns (GF(2^8) Polynomials 14, 11, 13, 9)`, with `InvMixColumns` bypassed in Round 10.
-
-### 3. Bulletproof 3-Step UART Handshake & Watchdog
-* Implements a deterministic 3-step transmission handshake (`S_TX_BYTE` $\rightarrow$ `S_WAIT_BUSY_HIGH` $\rightarrow$ `S_WAIT_BUSY_LOW`) preventing byte clobbering and buffer overruns during high-speed serial streaming.
-* Includes a **100 ms hardware auto-timeout watchdog** that restores the receiver FSM to `S_IDLE` in the event of dropped or incomplete frames.
+| Metric                       | Measured Result | Device Capacity | Utilization / Margin |
+| ---------------------------- | --------------: | --------------: | -------------------: |
+| Slice LUTs                   |           4,327 |          20,800 |               20.80% |
+| Flip-Flops                   |           2,556 |          41,600 |                6.14% |
+| F7/F8 Multiplexers           |           1,057 |          24,450 |                4.32% |
+| User I/O                     |              42 |             170 |               24.71% |
+| Global Clock Buffers         |               1 |              32 |                3.13% |
+| Block RAM                    |               0 |              50 |                0.00% |
+| DSP                          |               0 |              90 |                0.00% |
+| System Clock                 |       50.00 MHz |               — |           Timing met |
+| Clock Period                 |        20.00 ns |               — |                    — |
+| Worst Negative Slack         |       +3.496 ns |               — |             Positive |
+| Worst Hold Slack             |       +0.051 ns |               — |             Positive |
+| Failing Timing Endpoints     |       0 / 6,082 |               — |                0.00% |
+| Calculated Maximum Frequency |       60.59 MHz |               — |                    — |
+| Total On-Chip Power          |          125 mW |               — |                    — |
+| Dynamic Power                |           53 mW |               — |                    — |
+| Static Power                 |           72 mW |               — |                    — |
+| Junction Temperature         |         25.6 °C |     85.0 °C max |       59.4 °C margin |
 
 ---
 
-## 📡 UART Frame & Command Protocol
+## Microarchitecture
 
-The FPGA communicates with the host suite over a full-duplex binary frame protocol at **115,200 baud, 8-N-1**:
+### Pipelined AES Key Expansion
 
-| Command | CMD | LEN | PAYLOAD (16 Bytes) | FPGA Return Response | Description |
-| :--- | :---: | :---: | :---: | :---: | :--- |
-| **SET_KEY** | `0x01` | `0x10` | 128-Bit Master Key | `0xAA` (ACK) | Burns key into hardware registers and expands schedule |
-| **ENCRYPT** | `0x02` | `0x10` | 128-Bit Plaintext Block | `0xAA` + 16B Ciphertext | Executes 10-round AES encryption |
-| **DECRYPT** | `0x03` | `0x10` | 128-Bit Ciphertext Block | `0xAA` + 16B Plaintext | Executes 10-round inverse AES decryption |
-| **PING** | `0x04` | `0x00` | *None* | `0x55` (ACK) | Hardware presence and handshake verification |
+The original unrolled key expansion implementation created a long combinational path through multiple AES S-Boxes and XOR stages.
+
+The key expansion was redesigned as a registered iterative schedule:
+
+* One round key generated per clock cycle.
+* Key expansion implemented using the `ST_EXP_KEY` state.
+* Critical path reduced to approximately 8.40 ns.
+* All 11 AES-128 round keys are stored in hardware registers.
+* Subsequent blocks using the same key can reuse the cached schedule without repeating key expansion.
+
+For a cached key, the AES engine processes a block in 10 clock cycles, corresponding to 200 ns at 50 MHz, excluding UART communication overhead.
+
+### AES-128 Encryption
+
+The encryption datapath follows the AES-128 transformation sequence defined by FIPS-197:
+
+* SubBytes
+* ShiftRows
+* MixColumns
+* AddRoundKey
+
+MixColumns is omitted from the final AES round as required by the AES specification.
+
+### AES-128 Decryption
+
+The decryption datapath implements the inverse AES transformation:
+
+* InvShiftRows
+* InvSubBytes
+* AddRoundKey
+* InvMixColumns
+
+InvMixColumns is omitted from the final inverse round.
+
+The implementation uses the standard AES inverse transformation coefficients:
+
+* 0x0E
+* 0x0B
+* 0x0D
+* 0x09
 
 ---
 
-## 🧪 NIST SP 800-38A Validation Test Vector
+## UART Communication
 
-The hardware engine has been verified bit-for-bit against official NIST golden test vectors:
+The FPGA communicates with the host system using a full-duplex UART interface.
 
-* **Master Key (K)**: `000102030405060708090A0B0C0D0E0F`
-* **Plaintext (P)**: `00112233445566778899AABBCCDDEEFF`
-* **Expected Output (C)**: `69C4E0D86A7B0430D8CDB78070B4C55A`
-* **FPGA Hardware Output**: `69C4E0D86A7B0430D8CDB78070B4C55A` $\rightarrow$ **100% Bit-for-Bit Match**
+**Configuration:**
+
+* Baud rate: 115,200
+* Data bits: 8
+* Parity: None
+* Stop bits: 1
+* Interface: USB-UART
+* FPGA pins: C4 / D4
+
+### Transmission Handshake
+
+The UART transmitter uses a three-stage handshake:
+
+```text
+S_TX_BYTE
+     |
+     v
+S_WAIT_BUSY_HIGH
+     |
+     v
+S_WAIT_BUSY_LOW
+```
+
+This ensures that transmitted bytes are not overwritten before the UART interface has completed the previous transfer.
+
+### Watchdog
+
+A 100 ms hardware watchdog monitors incomplete or stalled communication sequences.
+
+If a frame or command remains incomplete beyond the timeout period, the protocol state machine returns to `S_IDLE`.
 
 ---
 
-## 📂 Repository File Tree
+## UART Command Protocol
+
+| Command |    CMD |    LEN | Payload            | Response                    | Description                     |
+| ------- | -----: | -----: | ------------------ | --------------------------- | ------------------------------- |
+| SET_KEY | `0x01` | `0x10` | 16-byte key        | `0xAA`                      | Programs the AES-128 master key |
+| ENCRYPT | `0x02` | `0x10` | 16-byte plaintext  | `0xAA` + 16-byte ciphertext | Encrypts one AES block          |
+| DECRYPT | `0x03` | `0x10` | 16-byte ciphertext | `0xAA` + 16-byte plaintext  | Decrypts one AES block          |
+| PING    | `0x04` | `0x00` | None               | `0x55`                      | Verifies FPGA communication     |
+
+---
+
+## AES Validation
+
+The AES engine has been tested against the standard AES-128 test vector defined by NIST FIPS-197.
+
+### Test Vector
+
+**Key**
+
+```text
+000102030405060708090A0B0C0D0E0F
+```
+
+**Plaintext**
+
+```text
+00112233445566778899AABBCCDDEEFF
+```
+
+**Expected Ciphertext**
+
+```text
+69C4E0D86A7B0430D8CDB78070B4C55A
+```
+
+**FPGA Output**
+
+```text
+69C4E0D86A7B0430D8CDB78070B4C55A
+```
+
+The FPGA output matches the expected AES-128 ciphertext bit-for-bit.
+
+---
+
+## Repository Structure
 
 ```text
 ├── hdl/
-│   └── hsm_top_artix7.v         # Complete synthesizable Verilog top-level, AES engine & UART
+│   └── hsm_top_artix7.v
+│       Complete synthesizable Verilog implementation
+│
 ├── constrs/
-│   └── EDGE_Artix7_HSM.xdc      # Physical pin constraints (Clock, UART C4/D4, LCD, 7-Seg)
+│   └── EDGE_Artix7_HSM.xdc
+│       FPGA pin and timing constraints
+│
 ├── host_app/
-│   └── hsm_host_app.py          # Python scientific desktop GUI host application
+│   └── hsm_host_app.py
+│       Python host application
+│
 ├── bitstream/
-│   └── hsm_top_artix7.bit       # Pre-compiled bitstream ready to flash via Vivado
+│   └── hsm_top_artix7.bit
+│       Compiled FPGA bitstream
+│
 ├── docs/
-│   ├── timing_summary.txt       # Official post-route timing summary (WNS +3.496 ns)
-│   ├── utilization_report.txt   # Official resource utilization report (4,327 LUTs)
-│   ├── power_report.txt         # Official routed power report (125 mW)
-│   └── aegis_v_architecture.tex # LaTeX/TikZ source code for vector system block diagram
+│   ├── timing_summary.txt
+│   ├── utilization_report.txt
+│   ├── power_report.txt
+│   └── aegis_v_architecture.tex
+│
 ├── .gitignore
 └── README.md
 ```
 
 ---
 
-## 🚀 Quickstart & Replication
+## Requirements
 
-### 1. Flash the FPGA Hardware
-1. Connect your **EDGE Artix-7 Development Board** to your PC via USB.
-2. Open **Vivado Hardware Manager** $\rightarrow$ **Auto Connect**.
-3. Program device `xc7a35t_0` with `bitstream/hsm_top_artix7.bit`.
-4. The onboard **16x2 LCD** will immediately initialize with:
-   ```text
-   HSM: AES-128 *
-   BLK:0000 [OK]
-   ```
+### FPGA
 
-### 2. Launch the Scientific Host Suite
-1. Install Python serial dependencies:
-   ```bash
-   pip install pyserial
-   ```
-2. Run the application:
-   ```bash
-   python host_app/hsm_host_app.py
-   ```
-3. Select your serial COM port and click **Connect Device**.
-4. Click **"Run NIST Golden Test Vector"** to mathematically verify the silicon engine in real-time.
-5. Use the **Binary Payload & File Vault** tab to encrypt and decrypt arbitrary files (.pdf, images, binary datasets).
+* AMD-Xilinx Artix-7
+* Device: `XC7A35T-1FTG256C`
+* Vivado 2025.2
+* 50 MHz system clock
+
+### Host
+
+* Python 3
+* PySerial
+
+Install the required Python dependency:
+
+```bash
+pip install pyserial
+```
 
 ---
 
-## 📄 License
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+## Deployment
+
+### 1. Program the FPGA
+
+Connect the Artix-7 development board to the host system and open Vivado Hardware Manager.
+
+1. Select **Auto Connect**.
+2. Detect the Artix-7 device.
+3. Program the FPGA using:
+
+```text
+bitstream/hsm_top_artix7.bit
+```
+
+### 2. Start the Host Application
+
+Run:
+
+```bash
+python host_app/hsm_host_app.py
+```
+
+Select the appropriate serial port and connect to the FPGA.
+
+The host application provides:
+
+* FPGA communication testing
+* NIST AES-128 test-vector verification
+* AES encryption and decryption
+* Binary payload streaming
+* File encryption and decryption
+* UART communication diagnostics
+
+---
+
+## License
+
+This project is licensed under the MIT License.
